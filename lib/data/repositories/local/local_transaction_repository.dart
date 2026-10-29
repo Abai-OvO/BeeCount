@@ -888,6 +888,80 @@ class LocalTransactionRepository implements TransactionRepository {
   }
 
   @override
+  Future<List<({int accountId, int usageCount})>> getCategoryAccountUsage({
+    required int ledgerId,
+    List<int> categoryIds = const [],
+    List<String> categorySyncIds = const [],
+    int limit = 50,
+  }) async {
+    final ids = categoryIds.where((id) => id > 0).toSet().toList();
+    final syncIds =
+        categorySyncIds.where((s) => s.isNotEmpty).toSet().toList();
+    if (ids.isEmpty && syncIds.isEmpty) return const [];
+
+    final categoryClauses = <String>[];
+    final variables = <d.Variable>[d.Variable.withInt(ledgerId)];
+    if (ids.isNotEmpty) {
+      categoryClauses
+          .add('category_id IN (${List.filled(ids.length, '?').join(',')})');
+      variables.addAll(ids.map(d.Variable.withInt));
+    }
+    if (syncIds.isNotEmpty) {
+      categoryClauses.add(
+          'category_sync_id_override IN (${List.filled(syncIds.length, '?').join(',')})');
+      variables.addAll(syncIds.map(d.Variable.withString));
+    }
+    final effectiveLimit = limit.clamp(1, 100).toInt();
+    variables.add(d.Variable.withInt(effectiveLimit));
+
+    // P2-3:两列表同传时下面的 OR 形态会退化为 ledger 前缀扫描(EXPLAIN 实证)。
+    // 当前唯一调用方(编辑器按分类记忆)两类互斥、每类只传其一,各自完整命中
+    // 复合索引 idx_transactions_ledger_category{,_sync}。未来若出现双列表调用
+    // 方,先拆两条单列表查询再在 Dart 侧合并,不要直接扩 OR。
+    final rows = await db
+        .customSelect(
+          '''
+      SELECT account_id, account_sync_id_override, COUNT(*) AS usage_count,
+             MAX(happened_at) AS last_used_at
+      FROM transactions
+      WHERE ledger_id = ?
+        AND (${categoryClauses.join(' OR ')})
+        AND (account_id IS NOT NULL OR account_sync_id_override IS NOT NULL)
+      GROUP BY CASE WHEN COALESCE(account_sync_id_override, '') != ''
+                    THEN account_sync_id_override
+                    ELSE '#' || COALESCE(account_id, 0) END
+      ORDER BY usage_count DESC, last_used_at DESC,
+               account_id DESC, account_sync_id_override DESC
+      LIMIT ?
+      ''',
+          variables: variables,
+          readsFrom: {db.transactions},
+        )
+        .get();
+
+    final result = <({int accountId, int usageCount})>[];
+    for (final row in rows) {
+      final syncId = row.read<String?>('account_sync_id_override');
+      final int accountId;
+      if (syncId != null && syncId.isNotEmpty) {
+        accountId = syntheticIdForSyncId(syncId);
+      } else {
+        final rawId = row.read<int?>('account_id');
+        if (rawId == null) continue;
+        accountId = rawId;
+      }
+      final rawCount = row.data['usage_count'];
+      final count = rawCount is BigInt
+          ? rawCount.toInt()
+          : rawCount is num
+              ? rawCount.toInt()
+              : 0;
+      result.add((accountId: accountId, usageCount: count));
+    }
+    return result;
+  }
+
+  @override
   Future<int> countByTypeInRange({
     required int ledgerId,
     required String type,

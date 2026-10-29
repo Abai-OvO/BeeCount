@@ -148,6 +148,13 @@ abstract class TransactionRepository {
     int limit = 20,
   });
 
+  Future<List<({int accountId, int usageCount})>> getCategoryAccountUsage({
+    required int ledgerId,
+    List<int> categoryIds = const [],
+    List<String> categorySyncIds = const [],
+    int limit = 50,
+  });
+
   /// 根据ID获取单条交易
   Future<Transaction?> getTransactionById(int id);
 

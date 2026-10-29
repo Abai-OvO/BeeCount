@@ -20,11 +20,11 @@ import '../../models/assistant_execution_metadata.dart';
 import '../../models/assistant_prompt_suggestions.dart';
 import '../../styles/tokens.dart';
 import '../../utils/ui_scale_extensions.dart';
+import '../../utils/transaction_edit_utils.dart';
 import '../../services/billing/post_processor.dart';
 import '../../providers.dart';
 import '../../providers/ai_chat_providers.dart';
 import '../../ai/core/bill_info.dart';
-import '../../pages/transaction/transaction_editor_page.dart';
 import '../../pages/ai/ai_settings_page.dart';
 import '../../pages/ai/ai_provider_manage_page.dart';
 import '../../pages/ai/agent_assistant_settings_page.dart';
@@ -1161,21 +1161,12 @@ class _AIChatPageState extends ConsumerState<AIChatPage>
       }
 
       if (mounted) {
-        await Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => TransactionEditorPage(
-              initialKind: transaction.type,
-              quickAdd: true,
-              initialCategoryId: transaction.categoryId,
-              initialAmount: transaction.amount,
-              initialDate: transaction.happenedAt,
-              initialNote: transaction.note,
-              editingTransactionId: transaction.id,
-              initialAccountId: transaction.accountId,
-              initialToAccountId: transaction.toAccountId,
-            ),
-          ),
-        );
+        // P1-4:必须走 TransactionEditUtils 的统一入口 —— 共享账本 Editor 记的
+        // 交易 categoryId/accountId 为 null,真实引用在 *SyncIdOverride,直接
+        // 传原始值会让编辑器拿不到已选账户,保存时还无条件清空 override,
+        // 「编辑即静默丢失原账户」并同步。这里顺带补齐标签/排除标记等回显。
+        await TransactionEditUtils.editTransaction(
+            context, ref, transaction, null);
 
         // 从编辑页面返回后，无论是否保存，都刷新账单卡片
         if (mounted) {

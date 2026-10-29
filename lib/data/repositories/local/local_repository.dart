@@ -876,6 +876,20 @@ class LocalRepository extends BaseRepository {
       );
 
   @override
+  Future<List<({int accountId, int usageCount})>> getCategoryAccountUsage({
+    required int ledgerId,
+    List<int> categoryIds = const [],
+    List<String> categorySyncIds = const [],
+    int limit = 50,
+  }) =>
+      _transactionRepo.getCategoryAccountUsage(
+        ledgerId: ledgerId,
+        categoryIds: categoryIds,
+        categorySyncIds: categorySyncIds,
+        limit: limit,
+      );
+
+  @override
   Future<
       List<
           ({

@@ -5335,6 +5335,12 @@ class AppLocalizationsKo extends AppLocalizations {
   String get accountDefaultNone => '설정 안 됨';
 
   @override
+  String get smartAccountByCategoryTitle => '분류별 계정 기억';
+
+  @override
+  String get smartAccountByCategoryDesc => '기록 시 해당 분류에서 가장 많이 쓴 계정을 우선 선택';
+
+  @override
   String get commonNotice => '알림';
 
   @override

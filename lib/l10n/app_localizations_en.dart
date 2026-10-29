@@ -5335,6 +5335,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get accountDefaultNone => 'Not Set';
 
   @override
+  String get smartAccountByCategoryTitle => 'Remember account by category';
+
+  @override
+  String get smartAccountByCategoryDesc => 'Prefer the account most used for this category';
+
+  @override
   String get commonNotice => 'Notice';
 
   @override

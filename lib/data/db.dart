@@ -511,7 +511,7 @@ class BeeDatabase extends _$BeeDatabase {
   BeeDatabase.forTesting(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 33; // v33: Agent 本地记忆、摘要与审计表
+  int get schemaVersion => 34; // v34: transactions 按分类聚合索引
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1258,12 +1258,26 @@ class BeeDatabase extends _$BeeDatabase {
             await _createAgentMemoryFtsTable();
             logger.info('DBMigration', 'v33 迁移完成');
           }
+          if (from < 34) {
+            await customStatement(
+                'CREATE INDEX IF NOT EXISTS idx_transactions_ledger_category '
+                'ON transactions (ledger_id, category_id);');
+            await customStatement(
+                'CREATE INDEX IF NOT EXISTS idx_transactions_ledger_category_sync '
+                'ON transactions (ledger_id, category_sync_id_override);');
+          }
         },
         onCreate: (m) async {
           await m.createAll();
           await customStatement(
               'CREATE UNIQUE INDEX IF NOT EXISTS idx_rate_override_pair '
               'ON exchange_rate_overrides (base_currency, quote_currency);');
+          await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_transactions_ledger_category '
+              'ON transactions (ledger_id, category_id);');
+          await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_transactions_ledger_category_sync '
+              'ON transactions (ledger_id, category_sync_id_override);');
           await _createAgentMemoryFtsTable();
         },
       );

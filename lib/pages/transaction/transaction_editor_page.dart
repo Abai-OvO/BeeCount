@@ -17,6 +17,7 @@ import '../../styles/tokens.dart';
 import '../../services/billing/post_processor.dart';
 import '../../services/attachment_service.dart';
 import '../../services/data/tx_author_service.dart';
+import '../../utils/smart_account_by_category.dart';
 
 /// 交易编辑器页面
 /// 支持创建/编辑收入、支出和转账记录
@@ -223,37 +224,6 @@ class _TransactionEditorPageState extends ConsumerState<TransactionEditorPage>
     );
   }
 
-  /// 获取默认账户ID（验证币种匹配）
-  Future<int?> _getDefaultAccountId(String kind, int ledgerId) async {
-    try {
-      // 1. 根据类型获取默认账户ID
-      final defaultAccountId = kind == 'income'
-          ? await ref.read(defaultIncomeAccountIdProvider.future)
-          : await ref.read(defaultExpenseAccountIdProvider.future);
-
-      if (defaultAccountId == null) return null;
-
-      // 2. 获取账本币种
-      final ledger = await ref.read(ledgerByIdProvider(ledgerId).future);
-      if (ledger == null) return null;
-
-      // 3. 获取默认账户信息
-      final account = await ref.read(accountByIdProvider(defaultAccountId).future);
-      if (account == null) return null;
-
-      // 账户隐藏 #240 E3:默认账户已被隐藏时按「无默认」处理(defensive 兜底,
-      // 正常路径下隐藏时已清 pref,这里防同步竞态等边缘情况)
-      if (account.hidden) return null;
-
-      // 4. 验证币种匹配
-      if (account.currency != ledger.currency) return null;
-
-      return defaultAccountId;
-    } catch (e) {
-      return null;
-    }
-  }
-
   Future<void> _onCategorySelected(BuildContext context, Category c, String kind) async {
     if (!widget.quickAdd) {
       Navigator.pop(context, c);
@@ -263,9 +233,27 @@ class _TransactionEditorPageState extends ConsumerState<TransactionEditorPage>
 
     // 确定初始账户ID（新建时使用默认账户，编辑时保持原值）
     int? initialAccountId = widget.initialAccountId;
+    List<int> usageOrderAccountIds = const [];
     if (!widget.isCopy && widget.editingTransactionId == null && widget.initialAccountId == null) {
-      // 新建模式：尝试获取默认账户
-      initialAccountId = await _getDefaultAccountId(kind, ledgerId);
+      // 新建模式：优先按分类使用次数选默认账户，无统计时回退全局默认。
+      // 两条查询链互不依赖,并行取,别串行阻塞面板弹出(P1-2)。
+      // 管线与周期记账模板共用,见 utils/smart_account_by_category.dart。
+      final results = await Future.wait<Object?>([
+        categoryAccountOrderForPicker(ref: ref, ledgerId: ledgerId, category: c),
+        defaultAccountForKind(ref, kind, ledgerId),
+      ]);
+      if (!context.mounted) return; // 等待期页面可能已被 pop(P2-5)
+      usageOrderAccountIds = results[0] as List<int>;
+      final defaultAccountId = results[1] as int?;
+      if (usageOrderAccountIds.isEmpty) {
+        initialAccountId = defaultAccountId;
+      } else {
+        initialAccountId = usageOrderAccountIds.first;
+        if (defaultAccountId != null &&
+            !usageOrderAccountIds.contains(defaultAccountId)) {
+          usageOrderAccountIds = [...usageOrderAccountIds, defaultAccountId];
+        }
+      }
     }
 
     await showModalBottomSheet(
@@ -285,6 +273,7 @@ class _TransactionEditorPageState extends ConsumerState<TransactionEditorPage>
         initialAccountId: initialAccountId,
         initialTagIds: widget.initialTagIds,
         showAccountPicker: true,
+        usageOrderAccountIds: usageOrderAccountIds,
         ledgerId: ledgerId,
         editingTransactionId: widget.editingTransactionId,
         transactionKind: kind,

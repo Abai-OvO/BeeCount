@@ -2221,6 +2221,8 @@
   "accountDefaultIncomeTitle": "默认收入账户",
   "accountDefaultExpenseTitle": "默认支出账户",
   "accountDefaultNone": "不设置",
+  "smartAccountByCategoryTitle": "按分类记忆账户",
+  "smartAccountByCategoryDesc": "记账时优先选该分类常用的账户",
   "commonNotice": "提示",
   "transferTitle": "转账",
   "transferIconSettings": "转账图标设置",

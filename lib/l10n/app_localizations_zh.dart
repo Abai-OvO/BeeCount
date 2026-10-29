@@ -5335,6 +5335,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get accountDefaultNone => '不设置';
 
   @override
+  String get smartAccountByCategoryTitle => '按分类记忆账户';
+
+  @override
+  String get smartAccountByCategoryDesc => '记账时优先选该分类常用的账户';
+
+  @override
   String get commonNotice => '提示';
 
   @override
@@ -14004,6 +14010,12 @@ class AppLocalizationsZhTw extends AppLocalizationsZh {
 
   @override
   String get accountDefaultNone => '不設定';
+
+  @override
+  String get smartAccountByCategoryTitle => '依分類記憶帳戶';
+
+  @override
+  String get smartAccountByCategoryDesc => '記帳時優先選該分類常用的帳戶';
 
   @override
   String get commonNotice => '提示';

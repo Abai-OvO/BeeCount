@@ -1249,6 +1249,45 @@ class _AccountsPageState extends ConsumerState<AccountsPage> {
                       primaryColor: primaryColor,
                       type: 'income',
                     ),
+                    // P2-12:prefs 未加载完不渲染开关 —— 避免先按默认 true 显示、
+                    // 加载完跳到用户实际保存值的「ON→OFF 闪跳」。
+                    if (ref
+                        .watch(smartAccountByCategoryEnabledProvider)
+                        .asData
+                        ?.value case final smartEnabled?) ...[
+                      Divider(
+                        height: 1,
+                        indent: 16,
+                        endIndent: 16,
+                        color: BeeTokens.divider(context),
+                      ),
+                      SwitchListTile(
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                        title: Text(
+                          l10n.smartAccountByCategoryTitle,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: BeeTokens.textPrimary(context),
+                          ),
+                        ),
+                        subtitle: Text(
+                          l10n.smartAccountByCategoryDesc,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: BeeTokens.textTertiary(context),
+                          ),
+                        ),
+                        value: smartEnabled,
+                        activeColor: primaryColor,
+                        onChanged: (value) async {
+                          await ref
+                              .read(smartAccountByCategorySetterProvider)
+                              .setEnabled(value);
+                          ref.invalidate(smartAccountByCategoryEnabledProvider);
+                        },
+                      ),
+                    ],
                   ],
                   SizedBox(height: 16.0.scaled(context, ref)),
                 ],

@@ -407,6 +407,30 @@ final defaultAccountSetterProvider = Provider<DefaultAccountSetter>((ref) {
   return DefaultAccountSetter();
 });
 
+// ===== 按分类记忆账户(P2-11 补节注释) =====
+// 开关持久化;管线本体在 utils/smart_account_by_category.dart,
+// 消费方:交易编辑器 quickAdd、周期记账模板、账户页设置开关。
+
+final smartAccountByCategoryEnabledProvider =
+    FutureProvider.autoDispose<bool>((ref) async {
+  final prefs = await SharedPreferences.getInstance();
+  final link = ref.keepAlive();
+  ref.onDispose(() => link.close());
+  return prefs.getBool('smart_account_for_category_enabled') ?? true;
+});
+
+class SmartAccountByCategorySetter {
+  Future<void> setEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('smart_account_for_category_enabled', enabled);
+  }
+}
+
+final smartAccountByCategorySetterProvider =
+    Provider<SmartAccountByCategorySetter>((ref) {
+  return SmartAccountByCategorySetter();
+});
+
 // AI小助手开关状态持久化
 final aiAssistantEnabledProvider =
     FutureProvider.autoDispose<bool>((ref) async {

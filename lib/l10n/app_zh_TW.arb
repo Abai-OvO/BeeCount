@@ -55,6 +55,8 @@
   "accountDefaultExpenseTitle": "預設支出帳戶",
   "accountDefaultIncomeTitle": "預設收入帳戶",
   "accountDefaultNone": "不設定",
+  "smartAccountByCategoryTitle": "依分類記憶帳戶",
+  "smartAccountByCategoryDesc": "記帳時優先選該分類常用的帳戶",
   "accountDeleteConfirm": "確認刪除該帳戶嗎？",
   "accountDeleteWarningMessage": "該帳戶有 {count} 筆關聯交易，刪除後交易記錄中的帳戶信息將被清空。確認刪除嗎？",
   "accountDeleteWarningTitle": "確認刪除",

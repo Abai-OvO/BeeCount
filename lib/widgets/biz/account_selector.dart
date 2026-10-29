@@ -18,6 +18,7 @@ class AccountSelector extends ConsumerStatefulWidget {
   final int? selectedAccountId;
   final ValueChanged<int?> onAccountSelected;
   final int ledgerId;
+  final List<int> usageOrderAccountIds;
   /// v30 多币种:按币种过滤可选账户(记账币种优先联动,选 JPY → 只显示 JPY
   /// 账户)。null = 账本本位币(旧行为)。变更时列表自动重载。
   final String? filterCurrency;
@@ -31,6 +32,7 @@ class AccountSelector extends ConsumerStatefulWidget {
     required this.selectedAccountId,
     required this.onAccountSelected,
     required this.ledgerId,
+    this.usageOrderAccountIds = const [],
     this.filterCurrency,
     this.pinnedAccountId,
   });
@@ -130,37 +132,14 @@ class _AccountSelectorState extends ConsumerState<AccountSelector> {
     }
   }
 
-  /// 根据 LRU 排序账户
-  /// 使用初始选中的账户ID进行排序，避免点击时立即重排
+  /// 候选排序:初始选中置顶 → 按分类使用统计(P1-3 抽出的纯函数) → LRU → 创建顺序
   List<Account> _getSortedAccounts() {
-    if (_accounts.isEmpty) return [];
-
-    final List<Account> sorted = [];
-
-    // 将初始选中的账户放在第一个（如果存在）
-    if (_initialSelectedAccountId != null) {
-      final selected = _accounts.where((a) => a.id == _initialSelectedAccountId).firstOrNull;
-      if (selected != null) {
-        sorted.add(selected);
-      }
-    }
-
-    // 按 LRU 顺序添加其他账户
-    for (final id in _lruOrder) {
-      final account = _accounts.where((a) => a.id == id && a.id != _initialSelectedAccountId).firstOrNull;
-      if (account != null && !sorted.contains(account)) {
-        sorted.add(account);
-      }
-    }
-
-    // 添加未在 LRU 中的账户（按创建顺序）
-    for (final account in _accounts) {
-      if (!sorted.contains(account)) {
-        sorted.add(account);
-      }
-    }
-
-    return sorted;
+    return sortAccountsForSelector(
+      accounts: _accounts,
+      usageOrder: widget.usageOrderAccountIds,
+      lruOrder: _lruOrder,
+      initialSelectedAccountId: _initialSelectedAccountId,
+    );
   }
 
   void _onAccountTap(int? accountId) {
@@ -278,4 +257,49 @@ class _AccountSelectorState extends ConsumerState<AccountSelector> {
       ),
     );
   }
+}
+
+List<Account> sortAccountsForSelector({
+  required List<Account> accounts,
+  required List<int> usageOrder,
+  required List<int> lruOrder,
+  int? initialSelectedAccountId,
+}) {
+  if (accounts.isEmpty) return [];
+
+  final List<Account> sorted = [];
+
+  if (initialSelectedAccountId != null) {
+    final selected =
+        accounts.where((a) => a.id == initialSelectedAccountId).firstOrNull;
+    if (selected != null) {
+      sorted.add(selected);
+    }
+  }
+
+  for (final id in usageOrder) {
+    final account = accounts
+        .where((a) => a.id == id && a.id != initialSelectedAccountId)
+        .firstOrNull;
+    if (account != null && !sorted.contains(account)) {
+      sorted.add(account);
+    }
+  }
+
+  for (final id in lruOrder) {
+    final account = accounts
+        .where((a) => a.id == id && a.id != initialSelectedAccountId)
+        .firstOrNull;
+    if (account != null && !sorted.contains(account)) {
+      sorted.add(account);
+    }
+  }
+
+  for (final account in accounts) {
+    if (!sorted.contains(account)) {
+      sorted.add(account);
+    }
+  }
+
+  return sorted;
 }

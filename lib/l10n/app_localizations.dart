@@ -10154,6 +10154,18 @@ abstract class AppLocalizations {
   /// **'Not Set'**
   String get accountDefaultNone;
 
+  /// No description provided for @smartAccountByCategoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remember account by category'**
+  String get smartAccountByCategoryTitle;
+
+  /// No description provided for @smartAccountByCategoryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Prefer the account most used for this category'**
+  String get smartAccountByCategoryDesc;
+
   /// No description provided for @commonNotice.
   ///
   /// In en, this message translates to:

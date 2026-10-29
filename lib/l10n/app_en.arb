@@ -2291,6 +2291,8 @@
   "accountDefaultIncomeTitle": "Default Income Account",
   "accountDefaultExpenseTitle": "Default Expense Account",
   "accountDefaultNone": "Not Set",
+  "smartAccountByCategoryTitle": "Remember account by category",
+  "smartAccountByCategoryDesc": "Prefer the account most used for this category",
   "commonNotice": "Notice",
   "transferTitle": "Transfer",
   "transferIconSettings": "Transfer Icon Settings",

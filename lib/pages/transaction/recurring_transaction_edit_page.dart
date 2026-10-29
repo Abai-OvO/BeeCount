@@ -12,6 +12,7 @@ import '../../services/data/recurring_transaction_service.dart';
 import '../../services/system/logger_service.dart';
 import '../../utils/category_utils.dart';
 import '../../utils/currencies.dart';
+import '../../utils/smart_account_by_category.dart';
 import '../../widgets/currency/currency_flag.dart';
 import '../../widgets/currency/currency_picker_sheet.dart';
 
@@ -740,6 +741,34 @@ class _RecurringTransactionEditPageState extends ConsumerState<RecurringTransact
       setState(() {
         _selectedCategory = selected;
       });
+      // 智能默认(P2-10):模板与交易编辑器同源 —— 按分类使用统计选常用账户,
+      // 无统计回退全局默认;按模板生效币种过滤。转账模板 from/to 均必选,不代填。
+      final ledgerId = _selectedLedgerId;
+      if (_type != 'transfer' && _selectedAccountId == null && ledgerId != null && mounted) {
+        final results = await Future.wait<Object?>([
+          categoryAccountOrderForPicker(
+            ref: ref,
+            ledgerId: ledgerId,
+            category: selected,
+            currencyWanted: _effectiveCurrency(),
+          ),
+          defaultAccountForKind(
+            ref,
+            _type,
+            ledgerId,
+            currencyWanted: _effectiveCurrency(),
+          ),
+        ]);
+        if (!mounted) return;
+        final order = results[0] as List<int>;
+        final fallback = results[1] as int?;
+        final smart = order.isNotEmpty ? order.first : fallback;
+        if (smart != null) {
+          setState(() {
+            _selectedAccountId = smart;
+          });
+        }
+      }
     }
   }
 

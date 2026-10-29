@@ -210,6 +210,7 @@ class AmountEditorSheet extends ConsumerStatefulWidget {
   final int? initialAccountId;
   final List<int>? initialTagIds; // 初始标签ID列表
   final bool showAccountPicker; // 是否显示账户选择
+  final List<int> usageOrderAccountIds;
   final bool allowContinueAdding; // 双击完成后回到分类选择继续新建
   final ValueChanged<AmountEditorResult> onSubmit;
   final int ledgerId;
@@ -233,6 +234,7 @@ class AmountEditorSheet extends ConsumerStatefulWidget {
     this.initialAccountId,
     this.initialTagIds,
     this.showAccountPicker = false,
+    this.usageOrderAccountIds = const [],
     this.allowContinueAdding = false,
     required this.onSubmit,
     required this.ledgerId,
@@ -1014,6 +1016,7 @@ class _AmountEditorSheetState extends ConsumerState<AmountEditorSheet> {
                       return AccountSelector(
                         selectedAccountId: _selectedAccountId,
                         ledgerId: widget.ledgerId,
+                        usageOrderAccountIds: widget.usageOrderAccountIds,
                         // 币种优先联动:账户列表只显示当前所选币种的账户
                         filterCurrency: _txCurrency(),
                         // 账户隐藏(#240)E1 钉住:该笔交易本来挂的账户(编辑

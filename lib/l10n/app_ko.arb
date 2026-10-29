@@ -1541,6 +1541,8 @@
   "accountDefaultIncomeTitle": "기본 수입 계정",
   "accountDefaultExpenseTitle": "기본 지출 계정",
   "accountDefaultNone": "설정 안 됨",
+  "smartAccountByCategoryTitle": "분류별 계정 기억",
+  "smartAccountByCategoryDesc": "기록 시 해당 분류에서 가장 많이 쓴 계정을 우선 선택",
   "commonNotice": "알림",
   "transferTitle": "이체",
   "transferIconSettings": "이체 아이콘 설정",
